@@ -6,12 +6,13 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { Producto } from './producto.entity';
 import { CreateProductoDto } from './create-producto.dto';
 import { UpdateProductoDto } from './update-producto.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('stock')
 export class StockController {

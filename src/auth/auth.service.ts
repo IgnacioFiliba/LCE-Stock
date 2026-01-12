@@ -15,13 +15,16 @@ export class AuthService {
 
   async register(username: string, password: string): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = this.userRepository.create({ username, password: hashedPassword });
+    const user = this.userRepository.create({
+      username,
+      password: hashedPassword,
+    });
     return this.userRepository.save(user);
   }
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.userRepository.findOneBy({ username });
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
       return result;
     }
