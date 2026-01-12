@@ -11,6 +11,7 @@ import { StockService } from './stock.service';
 import { Producto } from './producto.entity';
 import { CreateProductoDto } from './create-producto.dto';
 import { UpdateProductoDto } from './update-producto.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 
 @Controller('stock')
 export class StockController {
@@ -26,6 +27,7 @@ export class StockController {
     return this.stockService.findOne(+id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async createProducto(
     @Body() createProductoDto: CreateProductoDto,
@@ -33,6 +35,7 @@ export class StockController {
     return this.stockService.create(createProductoDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateProducto(
     @Param('id') id: string,
@@ -41,6 +44,7 @@ export class StockController {
     return this.stockService.update(+id, updateProductoDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteProducto(@Param('id') id: string): Promise<void> {
     return this.stockService.remove(+id);
