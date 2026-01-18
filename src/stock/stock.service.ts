@@ -9,7 +9,7 @@ import { UpdateProductoDto } from './update-producto.dto';
 export class StockService {
   constructor(
     @InjectRepository(Producto)
-    private productoRepository: Repository<Producto>,
+    private readonly productoRepository: Repository<Producto>,
   ) {}
 
   async findAll(): Promise<Producto[]> {
@@ -18,29 +18,34 @@ export class StockService {
 
   async findOne(id: number): Promise<Producto> {
     const producto = await this.productoRepository.findOneBy({ id });
+
     if (!producto) {
-      throw new NotFoundException(`Producto con ID ${id} no encontrado`);
+      throw new NotFoundException('Producto no encontrado');
     }
+
     return producto;
   }
 
-  async create(createProductoDto: CreateProductoDto): Promise<Producto> {
-    const producto = this.productoRepository.create(createProductoDto);
+  async create(dto: CreateProductoDto): Promise<Producto> {
+    const producto = this.productoRepository.create(dto);
     return this.productoRepository.save(producto);
   }
 
-  async update(
-    id: number,
-    updateProductoDto: UpdateProductoDto,
-  ): Promise<Producto> {
-    await this.productoRepository.update(id, updateProductoDto);
-    return this.findOne(id);
+  async update(id: number, dto: UpdateProductoDto): Promise<Producto> {
+    const producto = await this.findOne(id);
+    Object.assign(producto, dto);
+    return this.productoRepository.save(producto);
   }
 
   async remove(id: number): Promise<void> {
-    const result = await this.productoRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Producto con ID ${id} no encontrado`);
-    }
+    const producto = await this.findOne(id);
+    await this.productoRepository.remove(producto);
+  }
+
+  async stockBajo(): Promise<Producto[]> {
+    return this.productoRepository
+      .createQueryBuilder('producto')
+      .where('producto.stock <= producto.stockMinimo')
+      .getMany();
   }
 }

@@ -7,6 +7,9 @@ import {
   Param,
   Body,
   UseGuards,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { Producto } from './producto.entity';
@@ -24,12 +27,13 @@ export class StockController {
   }
 
   @Get(':id')
-  async getStockById(@Param('id') id: string): Promise<Producto> {
-    return this.stockService.findOne(+id);
+  async getStockById(@Param('id', ParseIntPipe) id: number): Promise<Producto> {
+    return this.stockService.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async createProducto(
     @Body() createProductoDto: CreateProductoDto,
   ): Promise<Producto> {
@@ -39,15 +43,16 @@ export class StockController {
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateProducto(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateProductoDto: UpdateProductoDto,
   ): Promise<Producto> {
-    return this.stockService.update(+id, updateProductoDto);
+    return this.stockService.update(id, updateProductoDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async deleteProducto(@Param('id') id: string): Promise<void> {
-    return this.stockService.remove(+id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteProducto(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.stockService.remove(id);
   }
 }
