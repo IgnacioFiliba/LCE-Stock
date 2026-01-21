@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -10,30 +14,53 @@ import * as bcrypt from 'bcrypt';
 export class AuthService {
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private jwtService: JwtService,
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async register(username: string, password: string): Promise<User> {
+    const existingUser = await this.userRepository.findOneBy({ username });
+
+    if (existingUser) {
+      throw new BadRequestException('El usuario ya existe');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = this.userRepository.create({
       username,
       password: hashedPassword,
     });
+
     return this.userRepository.save(user);
   }
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(
+    username: string,
+    password: string,
+  ): Promise<Omit<User, 'password'>> {
     const user = await this.userRepository.findOneBy({ username });
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
-      return result;
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciales inválidas');
     }
-    return null;
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.id };
+  async login(user: { id: number; username: string }) {
+    const payload = {
+      sub: user.id,
+      username: user.username,
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
     };
