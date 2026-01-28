@@ -26,6 +26,11 @@ export class StockController {
     return this.stockService.findAll();
   }
 
+  @Get()
+  async getAllStockk(): Promise<Producto[]> {
+    return this.stockService.findAll();
+  }
+
   @Get(':id')
   async getStockById(@Param('id', ParseIntPipe) id: number): Promise<Producto> {
     return this.stockService.findOne(id);
